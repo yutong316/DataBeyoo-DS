@@ -1,69 +1,64 @@
 # DataBeyoo-DS
 
+## 🏗️ Project Architecture
+
+The project processes journal metadata from two different sources—CSV and JSON files—and stores them in two separate but connected databases:
+Graph database (Blazegraph): Stores semantic journal metadata (e.g., title, ISSNs, languages, publisher, license, DOAJ Seal, APC status).
+Relational database (SQLite): Stores subject categories and areas, and models many-to-many relationships between journals, categories, and areas.
+
+### 🔸 Unified Data Structure
+
+There are three core entities: `Journal`, `Category`, and `Area`, all inheriting from a common base class `IdentifiableEntity`.
+This base class provides a shared `id` field and a `getIds()` method, enabling consistent handling of identifiers and future scalability.
+
+* **Journal**: Includes metadata such as title, languages, publisher, license, APC, DOAJ seal, categories, and areas.
+* **Category**: Represents journal subject classification and includes an optional `quartile` (e.g., Q1–Q4).
+* **Area**: Denotes broad academic domains such as Medicine, Social Sciences, etc.
+
+### 🔸 Modular Upload Framework
+
+We introduce a class hierarchy to support uploading from different formats:
+
+* `Handler`: Base class to manage database path or URL.
+* `UploadHandler`: Abstract subclass that defines a unified interface `pushDataToDb()`.
+* `JournalUploadHandler`: Uploads journal metadata from a CSV file to Blazegraph using SPARQL.
+* `CategoryUploadHandler`: Uploads classification and area data from a JSON file to SQLite using SQL.
+
+This design enables consistent interfaces and easy extensibility.
+
+### 🔸 Dual Database Strategy
+
+* **Blazegraph (Graph DB)**: Stores semantically rich journal metadata and supports SPARQL queries.
+* **SQLite (Relational DB)**: Stores structured relationships using normalized tables.
+
+### 🔸 Query & Integration Modules
+
+* **Query Module**: Handles single-database queries via SPARQL (for Blazegraph) or SQL (for SQLite).
+* **Integration Engine**: Combines data from both sources, constructs unified objects, and exposes a final query interface.
 
 ---
 
-## ✅ 精准平衡分工（每人约 570–590 行）
+## 👥 Team Responsibilities
 
----
+### 👩‍💻 Yutong Li
 
-### 👤 组员 A：**数据模型 + 图数据库（SPARQL）上传与查询**
+* Designed the entity classes: `IdentifiableEntity`, `Journal`, `Category`, `Area`
+* Implemented data upload handlers: `JournalUploadHandler`, `CategoryUploadHandler`
+* Handled CSV/JSON parsing and uploading to Blazegraph & SQLite
+* Led final integration, test runs, and debugging of the entire system
 
-**约 578 行（第 10–587 行）**
+### 👨‍💻 Yuming Lian
 
-| 行号      | 模块                                                         |
-| ------- | ---------------------------------------------------------- |
-| 10–52   | `IdentifiableEntity`、`Journal`、`Category`、`Area` 类（对象结构）   |
-| 54–144  | `Handler`、`UploadHandler`、`JournalUploadHandler`（图数据库上传）   |
-| 257–469 | `QueryHandler`、`JournalQueryHandler`（Blazegraph SPARQL 查询） |
+* Implemented SPARQL and SQL query logic
+* Developed the classes: `QueryHandler`, `JournalQueryHandler`, `CategoryQueryHandler`
+* Focused on single-database querying and data retrieval
 
-📌 工作关键词：对象类 + SPARQL 上传与查询
+### 👩‍💻 Xinyi Guo
 
----
+* Built the cross-database query engine
+* Implemented: `BasicQueryEngine`, `FullQueryEngine`
+* Responsible for data matching, object construction, and final query interface
 
-### 👤 组员 B：**关系数据库上传 + 查询 + 高级查询 FullQueryEngine**
 
-**约 584 行（第 146–729 行 + 1038–1038 行后）**
 
-| 行号        | 模块                                        |
-| --------- | ----------------------------------------- |
-| 146–255   | `CategoryUploadHandler`（JSON → SQLite 上传） |
-| 471–610   | `CategoryQueryHandler`（SQLite 查询）         |
-| 1038–1730 | `FullQueryEngine`（3 个联合跨库高级查询）            |
-
-📌 工作关键词：SQLite 数据库处理 + 联合查询逻辑 + 分类/领域模块
-
----
-
-### 👤 组员 C：**引擎整合 BasicQueryEngine + 集成方法辅助函数**
-
-**约 568 行（第 612–1036 行 + 810–869 行交叉）**
-
-| 行号                                 | 模块                                                       |
-| ---------------------------------- | -------------------------------------------------------- |
-| 612–1036                           | `BasicQueryEngine`（多个基础查询接口，整合对象返回）                      |
-| 810–869                            | `_getCategoriesForJournal` + `_getAreasForJournal`（辅助函数） |
-| 配合 A 与 B 协调运行 `test.py`，调试引擎输出是否正确 |                                                          |
-
-📌 工作关键词：整合逻辑、对象创建、单元测试准备
-
----
-
-## 👥 总览表（分配明晰）
-
-| 组员 | 模块覆盖                        | 起止行号                        | 行数估计    |
-| -- | --------------------------- | --------------------------- | ------- |
-| A  | 对象结构 + SPARQL 上传查询          | 10–52, 54–144, 257–469      | \~578 行 |
-| B  | JSON上传 + SQL 查询 + FullQuery | 146–255, 471–610, 1038–1730 | \~584 行 |
-| C  | 引擎整合逻辑 + 对象创建器              | 612–1036, 810–869（含交叉）      | \~568 行 |
-
----
-
-## 📦 合作建议
-
-* **初期阶段**：每人可在单独文件中开发，如 `upload_part.py`、`query_part.py`、`engine_part.py`；
-* **整合阶段**：由组员 C 统一合并为 `impl.py`，调试 `test.py`；
-* **接口沟通重点**：所有方法返回值结构必须一致，尤其是 `getById()` 和 `getAllX()` 需完全遵循 UML 要求。
-
----
 
